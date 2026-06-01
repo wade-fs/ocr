@@ -24,7 +24,12 @@ class ResultFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val card = arguments?.getParcelable<BusinessCard>("businessCard")
+        val card = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            arguments?.getParcelable("businessCard", BusinessCard::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            arguments?.getParcelable("businessCard")
+        }
         if (card != null) {
             displayCard(card)
         }

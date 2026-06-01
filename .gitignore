@@ -1,3 +1,5 @@
 local.properties
 key.txt
 README-TODO.md
+build
+.gradle

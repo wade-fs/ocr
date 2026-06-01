@@ -10,7 +10,7 @@ import com.google.gson.JsonSyntaxException
 class CardExtractor {
 
     private val model = GenerativeModel(
-        modelName = "gemini-1.5-flash",
+        modelName = "models/gemini-1.5-flash",
         apiKey = BuildConfig.GEMINI_API_KEY
     )
 
