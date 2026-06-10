@@ -47,46 +47,47 @@ class CardExtractor {
         // Simple heuristics
         for (line in lines) {
             // Name – usually the first line containing Chinese characters and ending with "博士" or similar
-            if (name == null && (line.contains("博士") || line.contains("先生") || line.contains("女士"))) {
+            if (name == null && (line.length <= 10 && !line.contains("股份有限公司") && !line.contains("有限公司"))) {
                 name = line
                 continue
             }
             // Company – contains "股份有限公司" or "有限公司" or known brand names
-            if (company == null && (line.contains("股份有限公司") || line.contains("有限公司") || line.matches(Regex(".*(MEDIITEK|MEDITEK|MEDI).*", RegexOption.IGNORE_CASE))) {
+            if (company == null && (line.contains("股份有限公司") || line.contains("有限公司") ||
+                    line.matches(Regex(".*(MEDIITEK|MEDITEK|MEDI).*", RegexOption.IGNORE_CASE)))) {
                 company = line
                 continue
             }
-            // Title – contains typical titles like "資深經理", "主管", "工程師" etc.
+            // Title – typical titles
             if (title == null && line.matches(Regex(".*(經理|主管|工程師|專員|總監|總經理|董事|副總|總辦公|顧問).*"))) {
                 title = line
                 continue
             }
-            // Phone – contains Taiwan mobile pattern
+            // Phone – Taiwan mobile pattern
             if (line.matches(Regex(".*(\\+?886|0)\\d{1,4}[ -]?\\d{3,4}[ -]?\\d{3,4}.*"))) {
                 phones.add(PhoneEntry(type = null, number = line))
                 continue
             }
-            // Email – contains @
+            // Email
             if (line.contains("@")) {
                 emails.add(line)
                 continue
             }
-            // Website – contains "www" or ".com"
+            // Website
             if (website == null && (line.contains("www") || line.contains(".com"))) {
                 website = line
                 continue
             }
-            // Address – contains typical address keywords
+            // Address
             if (address == null && line.matches(Regex(".*(新竹|台北|台中|台南|高雄).*"))) {
                 address = line
                 continue
             }
-            // WeChat – often starts with "WeChat" or contains "微信"
+            // WeChat
             if (wechat == null && (line.contains("WeChat") || line.contains("微信"))) {
                 wechat = line
                 continue
             }
-            // Anything else we treat as a note/line
+            // Other lines → note
             if (lineInfo == null) {
                 lineInfo = line
             } else {

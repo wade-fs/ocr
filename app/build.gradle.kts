@@ -30,6 +30,15 @@ android {
         val geminiApiKey = localProperties.getProperty("GEMINI_API_KEY") ?: ""
         buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
     }
+signingConfigs {
+    create("release") {
+        keyAlias = System.getenv("SIGNING_KEY_ALIAS") ?: "androidapk"
+        keyPassword = System.getenv("SIGNING_KEY_PASSWORD") ?: "jjchen"
+        val keyFile = System.getenv("SIGNING_KEY_FILE")
+        storeFile = if (keyFile != null) file(keyFile) else file("/home/wade/.ssh/androidapk.jks")
+        storePassword = System.getenv("SIGNING_STORE_PASSWORD") ?: "jjchen"
+    }
+}
 
     buildTypes {
         release {
@@ -38,12 +47,16 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+
+
+
     kotlinOptions {
         jvmTarget = "1.8"
     }
