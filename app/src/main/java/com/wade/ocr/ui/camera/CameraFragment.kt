@@ -109,9 +109,7 @@ class CameraFragment : Fragment() {
                 override fun onCaptureSuccess(image: ImageProxy) {
                     val bitmap = imageProxyToBitmap(image)
                     image.close()
-                    if (bitmap != null) {
-                        viewModel.processImage(bitmap)
-                    }
+                    viewModel.processImage(bitmap)
                 }
 
                 override fun onError(exception: ImageCaptureException) {
