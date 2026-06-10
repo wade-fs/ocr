@@ -1,4 +1,4 @@
-package com.example.businesscardscanner.data.model
+package com.wade.ocr.data.model
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize

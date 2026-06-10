@@ -1,11 +1,11 @@
-package com.example.businesscardscanner.ui.camera
+package com.wade.ocr.ui.camera
 
 import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.businesscardscanner.llm.CardExtractor
-import com.example.businesscardscanner.ocr.CardOcrProcessor
-import com.example.businesscardscanner.util.UiState
+import com.wade.ocr.llm.CardExtractor
+import com.wade.ocr.ocr.CardOcrProcessor
+import com.wade.ocr.util.UiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch

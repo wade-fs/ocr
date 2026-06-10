@@ -1,4 +1,4 @@
-package com.example.businesscardscanner.ui.camera
+package com.wade.ocr.ui.camera
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -19,9 +19,9 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import com.example.businesscardscanner.R
-import com.example.businesscardscanner.databinding.FragmentCameraBinding
-import com.example.businesscardscanner.util.UiState
+import com.wade.ocr.R
+import com.wade.ocr.databinding.FragmentCameraBinding
+import com.wade.ocr.util.UiState
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.util.concurrent.ExecutorService
@@ -121,12 +121,18 @@ class CameraFragment : Fragment() {
         )
     }
 
-    private fun imageProxyToBitmap(image: ImageProxy): Bitmap? {
-        val planeProxy = image.planes[0]
-        val buffer = planeProxy.buffer
-        val bytes = ByteArray(buffer.remaining())
-        buffer.get(bytes)
-        return BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+    private fun imageProxyToBitmap(image: ImageProxy): Bitmap {
+        // 使用 toBitmap() 擴充函數，自動處理 YUV → ARGB 轉換
+        // 需要 import androidx.camera.core.ExperimentalGetImage
+        val bitmap = image.toBitmap()
+        // 修正旋轉（相機旋轉資訊存在 imageInfo 中）
+        val rotation = image.imageInfo.rotationDegrees
+        return if (rotation != 0) {
+            val matrix = android.graphics.Matrix().apply { postRotate(rotation.toFloat()) }
+            Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+        } else {
+            bitmap
+        }
     }
 
     private fun startCamera() {

@@ -1,12 +1,12 @@
-package com.example.businesscardscanner.ui.result
+package com.wade.ocr.ui.result
 
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import com.example.businesscardscanner.data.model.BusinessCard
-import com.example.businesscardscanner.databinding.FragmentResultBinding
+import com.wade.ocr.data.model.BusinessCard
+import com.wade.ocr.databinding.FragmentResultBinding
 
 class ResultFragment : Fragment() {
 

@@ -1,4 +1,4 @@
-package com.example.businesscardscanner.util
+package com.wade.ocr.util
 
 import android.graphics.Bitmap
 import android.graphics.Matrix

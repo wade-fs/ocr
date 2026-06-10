@@ -1,6 +1,7 @@
-package com.example.businesscardscanner.util
+// util/UiState.kt
+package com.wade.ocr.util
 
-import com.example.businesscardscanner.data.model.BusinessCard
+import com.wade.ocr.data.model.BusinessCard
 
 sealed class UiState {
     object Idle : UiState()

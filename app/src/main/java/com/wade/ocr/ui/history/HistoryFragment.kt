@@ -1,11 +1,11 @@
-package com.example.businesscardscanner.ui.history
+package com.wade.ocr.ui.history
 
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import com.example.businesscardscanner.databinding.FragmentHistoryBinding
+import com.wade.ocr.databinding.FragmentHistoryBinding
 
 class HistoryFragment : Fragment() {
 

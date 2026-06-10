@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.businesscardscanner"
+    namespace = "com.wade.ocr"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.businesscardscanner"
+        applicationId = "com.wade.ocr"
         minSdk = 24
         targetSdk = 34
         versionCode = 1

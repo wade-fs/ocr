@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/cameraFragment"
-        android:name="com.example.businesscardscanner.ui.camera.CameraFragment"
+        android:name="com.wade.ocr.ui.camera.CameraFragment"
         android:label="Camera"
         tools:layout="@layout/fragment_camera">
         <action
@@ -17,7 +17,7 @@
 
     <fragment
         android:id="@+id/resultFragment"
-        android:name="com.example.businesscardscanner.ui.result.ResultFragment"
+        android:name="com.wade.ocr.ui.result.ResultFragment"
         android:label="Result"
         tools:layout="@layout/fragment_result">
         <action
@@ -27,7 +27,7 @@
 
     <fragment
         android:id="@+id/historyFragment"
-        android:name="com.example.businesscardscanner.ui.history.HistoryFragment"
+        android:name="com.wade.ocr.ui.history.HistoryFragment"
         android:label="History"
         tools:layout="@layout/fragment_history" />
 

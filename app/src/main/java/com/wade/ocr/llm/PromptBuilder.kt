@@ -1,4 +1,4 @@
-package com.example.businesscardscanner.llm
+package com.wade.ocr.llm
 
 object PromptBuilder {
     fun buildPrompt(ocrText: String): String = """

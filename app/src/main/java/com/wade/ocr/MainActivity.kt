@@ -1,8 +1,8 @@
-package com.example.businesscardscanner
+package com.wade.ocr
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import com.example.businesscardscanner.databinding.ActivityMainBinding
+import com.wade.ocr.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
 

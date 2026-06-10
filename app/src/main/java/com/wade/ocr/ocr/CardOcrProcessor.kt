@@ -1,4 +1,4 @@
-package com.example.businesscardscanner.ocr
+package com.wade.ocr.ocr
 
 import android.graphics.Bitmap
 import android.util.Log
@@ -17,6 +17,7 @@ class CardOcrProcessor {
         recognizer.process(image)
             .addOnSuccessListener { visionText ->
                 val structured = buildStructuredText(visionText)
+                Log.d("OCR", "Recognized text:\n$structured")
                 onResult(structured)
             }
             .addOnFailureListener { e ->
