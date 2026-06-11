@@ -7,11 +7,8 @@ plugins {
     id("kotlin-parcelize")
     id("com.google.devtools.ksp") version "2.1.0-1.0.29"
 }
-// kapt block removed
 
 android {
-
-
     namespace = "com.wade.ocr"
     compileSdk = 34
 
@@ -35,15 +32,24 @@ android {
         val geminiApiKey = localProperties.getProperty("GEMINI_API_KEY") ?: ""
         buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
     }
-signingConfigs {
-    create("release") {
-        keyAlias = System.getenv("SIGNING_KEY_ALIAS") ?: "androidapk"
-        keyPassword = System.getenv("SIGNING_KEY_PASSWORD") ?: "jjchen"
-        val keyFile = System.getenv("SIGNING_KEY_FILE")
-        storeFile = if (keyFile != null) file(keyFile) else file("/home/wade/.ssh/androidapk.jks")
-        storePassword = System.getenv("SIGNING_STORE_PASSWORD") ?: "jjchen"
+
+    signingConfigs {
+        create("release") {
+            val localProperties = Properties()
+            val localPropertiesFile = rootProject.file("local.properties")
+            if (localPropertiesFile.exists()) {
+                localProperties.load(localPropertiesFile.inputStream())
+            }
+
+            keyAlias = System.getenv("KEY_ALIAS") ?: localProperties.getProperty("keystore.key.alias")
+            keyPassword = System.getenv("KEY_PASSWORD") ?: localProperties.getProperty("keystore.key.password")
+            
+            val keyFile = System.getenv("KEY_FILE") ?: localProperties.getProperty("keystore.path")
+            storeFile = if (keyFile != null) file(keyFile) else file("/home/wade/.ssh/androidapk.jks")
+            
+            storePassword = System.getenv("STORE_PASSWORD") ?: localProperties.getProperty("keystore.password")
+        }
     }
-}
 
     buildTypes {
         release {
@@ -64,11 +70,6 @@ signingConfigs {
         jvmTarget = "11"
     }
 
-    // Java toolchain disabled; using project's JDK (>=11)
-
-
-
-
     lint {
         abortOnError = false
         checkReleaseBuilds = false
@@ -78,6 +79,10 @@ signingConfigs {
         viewBinding = true
         buildConfig = true
     }
+}
+
+base {
+    archivesName = "com.wade.ocr-${android.defaultConfig.versionName}"
 }
 
 dependencies {
