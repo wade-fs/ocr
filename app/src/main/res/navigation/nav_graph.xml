@@ -10,25 +10,45 @@
         android:name="com.wade.ocr.ui.camera.CameraFragment"
         android:label="Camera"
         tools:layout="@layout/fragment_camera">
+        <argument
+            android:name="cardId"
+            app:argType="long"
+            android:defaultValue="-1L" />
         <action
-            android:id="@+id/action_cameraFragment_to_resultFragment"
-            app:destination="@id/resultFragment" />
-    </fragment>
-
-    <fragment
-        android:id="@+id/resultFragment"
-        android:name="com.wade.ocr.ui.result.ResultFragment"
-        android:label="Result"
-        tools:layout="@layout/fragment_result">
-        <action
-            android:id="@+id/action_resultFragment_to_historyFragment"
-            app:destination="@id/historyFragment" />
+            android:id="@+id/action_cameraFragment_to_editCardFragment"
+            app:destination="@id/editCardFragment" />
     </fragment>
 
     <fragment
         android:id="@+id/historyFragment"
         android:name="com.wade.ocr.ui.history.HistoryFragment"
         android:label="History"
-        tools:layout="@layout/fragment_history" />
+        tools:layout="@layout/fragment_history">
+        <action
+            android:id="@+id/action_historyFragment_to_editCardFragment"
+            app:destination="@id/editCardFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/editCardFragment"
+        android:name="com.wade.ocr.ui.history.EditCardFragment"
+        android:label="Edit Card"
+        tools:layout="@layout/fragment_edit_card">
+        <argument
+            android:name="cardId"
+            app:argType="long"
+            android:defaultValue="-1L" />
+        <argument
+            android:name="businessCard"
+            app:argType="com.wade.ocr.data.model.BusinessCard"
+            app:nullable="true"
+            android:defaultValue="@null" />
+        <action
+            android:id="@+id/action_editCardFragment_to_cameraFragment"
+            app:destination="@id/cameraFragment" />
+        <action
+            android:id="@+id/action_editCardFragment_to_historyFragment"
+            app:destination="@id/historyFragment" />
+    </fragment>
 
 </navigation>

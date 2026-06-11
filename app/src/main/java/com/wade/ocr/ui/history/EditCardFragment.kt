@@ -1,0 +1,363 @@
+package com.wade.ocr.ui.history
+
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ArrayAdapter
+import android.widget.EditText
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import com.wade.ocr.R
+import com.wade.ocr.data.CardEntity
+import com.wade.ocr.data.local.AppDatabase
+import com.wade.ocr.data.local.CategoryEntity
+import com.wade.ocr.data.model.BusinessCard
+import com.wade.ocr.data.model.PhoneEntry
+import com.wade.ocr.databinding.FragmentEditCardBinding
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+class EditCardFragment : Fragment() {
+
+    private var _binding: FragmentEditCardBinding? = null
+    private val binding get() = _binding!!
+    
+    private var cardId: Long = -1L
+    private var scannedCard: BusinessCard? = null
+    private var currentDbCard: CardEntity? = null
+    private var categories: List<CategoryEntity> = emptyList()
+    private val gson = Gson()
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentEditCardBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        cardId = arguments?.getLong("cardId", -1L) ?: -1L
+        scannedCard = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            arguments?.getParcelable("businessCard", BusinessCard::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            arguments?.getParcelable("businessCard")
+        }
+
+        setupCategories()
+
+        if (cardId != -1L) {
+            loadCard()
+            binding.buttonDelete.visibility = View.VISIBLE
+        } else {
+            binding.buttonDelete.visibility = View.GONE
+            // If it's a new card, populate from scanned data
+            scannedCard?.let { populateFromBusinessCard(it) }
+        }
+
+        binding.buttonSave.setOnClickListener { saveCard() }
+        binding.buttonReRecognize.setOnClickListener { reRecognize() }
+        binding.buttonDelete.setOnClickListener { deleteCard() }
+        binding.buttonAddCategory.setOnClickListener { showAddCategoryDialog() }
+        binding.buttonManageCategory.setOnClickListener { showManageCategoryDialog() }
+    }
+
+    private fun showManageCategoryDialog() {
+        if (categories.isEmpty()) return
+        val categoryNames = categories.map { it.name }.toTypedArray()
+        
+        AlertDialog.Builder(requireContext())
+            .setTitle("管理群組分類")
+            .setItems(categoryNames) { _, which ->
+                val selectedCategory = categories[which]
+                showCategoryOptionsDialog(selectedCategory)
+            }
+            .setNegativeButton("關閉", null)
+            .show()
+    }
+
+    private fun showCategoryOptionsDialog(category: CategoryEntity) {
+        val options = arrayOf("更名", "刪除")
+        AlertDialog.Builder(requireContext())
+            .setTitle(category.name)
+            .setItems(options) { _, which ->
+                if (which == 0) {
+                    showRenameCategoryDialog(category)
+                } else if (which == 1) {
+                    deleteCategory(category)
+                }
+            }
+            .show()
+    }
+
+    private fun showRenameCategoryDialog(category: CategoryEntity) {
+        val input = EditText(requireContext())
+        input.setText(category.name)
+        
+        AlertDialog.Builder(requireContext())
+            .setTitle("群組更名")
+            .setView(input)
+            .setPositiveButton("儲存") { _, _ ->
+                val newName = input.text.toString().trim()
+                if (newName.isNotEmpty() && newName != category.name) {
+                    val dao = AppDatabase.getInstance(requireContext()).categoryDao()
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        dao.rename(category.id, newName)
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(requireContext(), "已更名為 $newName", Toast.LENGTH_SHORT).show()
+                            setupCategories()
+                        }
+                    }
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun deleteCategory(category: CategoryEntity) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("確認刪除群組")
+            .setMessage("確定要刪除「${category.name}」嗎？此群組內的名片仍會保留，但分類可能變為空白或預設。")
+            .setPositiveButton("刪除") { _, _ ->
+                val dao = AppDatabase.getInstance(requireContext()).categoryDao()
+                lifecycleScope.launch(Dispatchers.IO) {
+                    dao.delete(category.id)
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(requireContext(), "已刪除群組", Toast.LENGTH_SHORT).show()
+                        setupCategories()
+                    }
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun setupCategories() {
+        val categoryDao = AppDatabase.getInstance(requireContext()).categoryDao()
+        lifecycleScope.launch(Dispatchers.IO) {
+            categories = categoryDao.getAll().first()
+            val categoryNames = categories.map { it.name }
+            
+            withContext(Dispatchers.Main) {
+                val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, categoryNames)
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                binding.spinnerCategory.adapter = adapter
+                
+                // If editing existing, wait for loadCard to set selection
+                // If creating new, set default "個人"
+                if (cardId == -1L) {
+                    val index = categoryNames.indexOf("個人")
+                    if (index >= 0) binding.spinnerCategory.setSelection(index)
+                }
+            }
+        }
+    }
+
+    private fun loadCard() {
+        val dao = AppDatabase.getInstance(requireContext()).cardDao()
+        lifecycleScope.launch(Dispatchers.IO) {
+            currentDbCard = dao.getById(cardId)
+            withContext(Dispatchers.Main) {
+                // If we returned from re-recognize, scannedCard will not be null, use it instead of DB fields for text
+                if (scannedCard != null) {
+                    populateFromBusinessCard(scannedCard!!)
+                } else {
+                    currentDbCard?.let { populateFromDbCard(it) }
+                }
+
+                // Set Category from DB
+                currentDbCard?.let { card ->
+                    val index = categories.indexOfFirst { it.name == card.category }
+                    if (index >= 0) {
+                        binding.spinnerCategory.setSelection(index)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun populateFromDbCard(card: CardEntity) {
+        binding.editName.setText(card.name)
+        binding.editTitle.setText(card.title)
+        binding.editCompany.setText(card.company)
+        binding.editAddress.setText(card.address)
+        binding.editWebsite.setText(card.website)
+        binding.editNote.setText(card.rawText) // Show raw text or note
+        
+        val phonesType = object : TypeToken<List<PhoneEntry>>() {}.type
+        val phonesList: List<PhoneEntry>? = card.phonesJson?.let { gson.fromJson(it, phonesType) }
+        binding.editPhones.setText(phonesList?.joinToString(", ") { it.number ?: "" })
+        
+        val emailsType = object : TypeToken<List<String>>() {}.type
+        val emailsList: List<String>? = card.emailsJson?.let { gson.fromJson(it, emailsType) }
+        binding.editEmails.setText(emailsList?.joinToString(", "))
+        
+        binding.textRawOcr.text = "原始 OCR:\n${card.rawText ?: "無"}"
+    }
+
+    private fun populateFromBusinessCard(card: BusinessCard) {
+        binding.editName.setText(card.name)
+        binding.editTitle.setText(card.title)
+        binding.editCompany.setText(card.company)
+        binding.editAddress.setText(card.address)
+        binding.editWebsite.setText(card.website)
+        binding.editNote.setText(card.note)
+        
+        binding.editPhones.setText(card.phones?.joinToString(", ") { it.number ?: "" })
+        binding.editEmails.setText(card.emails?.joinToString(", "))
+        
+        binding.textRawOcr.text = "原始 OCR:\n${card.note ?: "無"}"
+    }
+
+    private fun saveCard() {
+        val selectedCategory = binding.spinnerCategory.selectedItem as? String ?: "個人"
+        val nameInput = binding.editName.text.toString().takeIf { it.isNotBlank() }
+
+        // Convert comma separated phones to JSON
+        val phoneStrings = binding.editPhones.text.toString().split(",").map { it.trim() }.filter { it.isNotEmpty() }
+        val phoneEntries = phoneStrings.map { PhoneEntry(type = null, number = it) }
+        
+        val emailStrings = binding.editEmails.text.toString().split(",").map { it.trim() }.filter { it.isNotEmpty() }
+
+        val cardEntity = CardEntity(
+            id = if (cardId != -1L) cardId else 0L,
+            name = nameInput,
+            title = binding.editTitle.text.toString().takeIf { it.isNotBlank() },
+            company = binding.editCompany.text.toString().takeIf { it.isNotBlank() },
+            address = binding.editAddress.text.toString().takeIf { it.isNotBlank() },
+            website = binding.editWebsite.text.toString().takeIf { it.isNotBlank() },
+            category = selectedCategory,
+            phonesJson = if (phoneEntries.isNotEmpty()) gson.toJson(phoneEntries) else null,
+            emailsJson = if (emailStrings.isNotEmpty()) gson.toJson(emailStrings) else null,
+            rawText = binding.editNote.text.toString().takeIf { it.isNotBlank() } ?: currentDbCard?.rawText,
+            wechat = currentDbCard?.wechat ?: scannedCard?.wechat,
+            bboxJson = currentDbCard?.bboxJson
+        )
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            val dao = AppDatabase.getInstance(requireContext()).cardDao()
+
+            // If new card, check duplicate name
+            if (cardId == -1L && nameInput != null) {
+                val duplicate = dao.getByName(nameInput)
+                if (duplicate != null) {
+                    withContext(Dispatchers.Main) {
+                        promptForCategoryAndSave(cardEntity, nameInput)
+                    }
+                    return@launch
+                }
+            }
+
+            if (cardId != -1L) {
+                dao.update(cardEntity)
+            } else {
+                dao.insert(cardEntity)
+            }
+            
+            withContext(Dispatchers.Main) {
+                Toast.makeText(requireContext(), "已儲存", Toast.LENGTH_SHORT).show()
+                findNavController().navigate(R.id.action_editCardFragment_to_historyFragment) // Replace navigateUp to avoid looping to camera
+            }
+        }
+    }
+
+    private fun promptForCategoryAndSave(cardEntity: CardEntity, duplicateName: String) {
+        val categoryNames = categories.map { it.name }
+        val builder = AlertDialog.Builder(requireContext())
+        builder.setTitle("發現同名名片 ($duplicateName)")
+        builder.setMessage("資料庫中已有同名名片，請選擇要將此新名片歸類至哪個群組以利區分：")
+        
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, categoryNames)
+        val spinner = android.widget.Spinner(requireContext()).apply {
+            this.adapter = adapter
+        }
+        
+        builder.setView(spinner)
+        builder.setPositiveButton("儲存") { _, _ ->
+            val selectedCategory = spinner.selectedItem as? String ?: "個人"
+            val updatedEntity = cardEntity.copy(category = selectedCategory)
+            
+            lifecycleScope.launch(Dispatchers.IO) {
+                val dao = AppDatabase.getInstance(requireContext()).cardDao()
+                dao.insert(updatedEntity)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "已儲存", Toast.LENGTH_SHORT).show()
+                    findNavController().navigate(R.id.action_editCardFragment_to_historyFragment)
+                }
+            }
+        }
+        builder.setNegativeButton("取消", null)
+        builder.show()
+    }
+
+    private fun deleteCard() {
+        val card = currentDbCard ?: return
+        AlertDialog.Builder(requireContext())
+            .setTitle("確認刪除")
+            .setMessage("確定要刪除這張名片嗎？")
+            .setPositiveButton("刪除") { _, _ ->
+                lifecycleScope.launch(Dispatchers.IO) {
+                    val dao = AppDatabase.getInstance(requireContext()).cardDao()
+                    dao.delete(card)
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(requireContext(), "已刪除名片", Toast.LENGTH_SHORT).show()
+                        findNavController().navigateUp()
+                    }
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun reRecognize() {
+        val bundle = Bundle().apply { putLong("cardId", cardId) }
+        findNavController().navigate(R.id.action_editCardFragment_to_cameraFragment, bundle)
+    }
+
+    private fun showAddCategoryDialog() {
+        val input = EditText(requireContext())
+        input.hint = "輸入新分類名稱"
+        
+        AlertDialog.Builder(requireContext())
+            .setTitle("新增群組分類")
+            .setView(input)
+            .setPositiveButton("新增") { _, _ ->
+                val newCategory = input.text.toString().trim()
+                if (newCategory.isNotEmpty()) {
+                    val dao = AppDatabase.getInstance(requireContext()).categoryDao()
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        val existing = dao.getByName(newCategory)
+                        if (existing == null) {
+                            dao.insert(CategoryEntity(name = newCategory))
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(requireContext(), "已新增 $newCategory", Toast.LENGTH_SHORT).show()
+                                setupCategories()
+                            }
+                        } else {
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(requireContext(), "分類已存在", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+}

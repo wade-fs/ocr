@@ -5,18 +5,13 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("kotlin-parcelize")
-    id("kotlin-kapt")
+    id("com.google.devtools.ksp") version "2.1.0-1.0.29"
 }
-kapt {
-    correctErrorTypes = true
-    javacOptions {
-        option("-source", "11")
-        option("-target", "11")
-    }
-}
-
+// kapt block removed
 
 android {
+
+
     namespace = "com.wade.ocr"
     compileSdk = 34
 
@@ -65,17 +60,12 @@ signingConfigs {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    // Use Java toolchain to enforce compatible JDK version
-    java {
-        toolchain {
-            languageVersion.set(JavaLanguageVersion.of(11))
-        }
-    }
-
-    // Kotlin compilation target set to Java 11
     kotlinOptions {
         jvmTarget = "11"
     }
+
+    // Java toolchain disabled; using project's JDK (>=11)
+
 
 
 
@@ -100,7 +90,7 @@ dependencies {
     // Room persistence library
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
-    kapt("androidx.room:room-compiler:2.6.1")
+    ksp("androidx.room:room-compiler:2.6.1")
     // Gson for JSON conversion of complex fields
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")
@@ -108,6 +98,7 @@ dependencies {
 
     // ML Kit
     implementation("com.google.mlkit:text-recognition-chinese:16.0.0")
+    implementation("com.google.mlkit:barcode-scanning:17.3.0")
 
     // Gemini
     implementation("com.google.ai.client.generativeai:generativeai:0.9.0")

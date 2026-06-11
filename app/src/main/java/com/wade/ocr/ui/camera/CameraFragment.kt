@@ -84,10 +84,12 @@ class CameraFragment : Fragment() {
                     }
                     is UiState.Done -> {
                         binding.progressBar.visibility = View.GONE
+                        val cardIdToUpdate = arguments?.getLong("cardId", -1L) ?: -1L
                         val bundle = Bundle().apply {
+                            putLong("cardId", cardIdToUpdate)
                             putParcelable("businessCard", state.card)
                         }
-                        findNavController().navigate(R.id.action_cameraFragment_to_resultFragment, bundle)
+                        findNavController().navigate(R.id.action_cameraFragment_to_editCardFragment, bundle)
                         viewModel.resetState()
                     }
                     is UiState.Error -> {

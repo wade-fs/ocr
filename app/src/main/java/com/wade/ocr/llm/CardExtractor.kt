@@ -11,12 +11,6 @@ import com.wade.ocr.data.model.PhoneEntry
  */
 class CardExtractor {
 
-    /**
-     * Extract a BusinessCard from the raw OCR text.
-     * The algorithm is heuristics‑based and aims to work for typical Chinese
-     * business cards (name, title, company, phone numbers, e‑mail, address,
-     * website, etc.).
-     */
     suspend fun extract(ocrText: String): BusinessCard? {
         return try {
             parseOcr(ocrText)
@@ -26,11 +20,9 @@ class CardExtractor {
         }
     }
 
-    /**
-     * Parse the OCR text line‑by‑line and fill a BusinessCard.
-     */
     private fun parseOcr(text: String): BusinessCard? {
-        val lines = text.lines().map { it.trim() }.filter { it.isNotEmpty() }
+        // Filter out "---" which is used as block separator
+        val lines = text.lines().map { it.trim() }.filter { it.isNotEmpty() && it != "---" }
         if (lines.isEmpty()) return null
 
         var name: String? = null
@@ -41,30 +33,13 @@ class CardExtractor {
         var address: String? = null
         var website: String? = null
         var wechat: String? = null
-        var note: String? = null
         var lineInfo: String? = null
+        val unclassified = mutableListOf<String>()
 
-        // Simple heuristics
         for (line in lines) {
-            // Name – usually the first line containing Chinese characters and ending with "博士" or similar
-            if (name == null && (line.length <= 10 && !line.contains("股份有限公司") && !line.contains("有限公司"))) {
-                name = line
-                continue
-            }
-            // Company – contains "股份有限公司" or "有限公司" or known brand names
-            if (company == null && (line.contains("股份有限公司") || line.contains("有限公司") ||
-                    line.matches(Regex(".*(MEDIITEK|MEDITEK|MEDI).*", RegexOption.IGNORE_CASE)))) {
-                company = line
-                continue
-            }
-            // Title – typical titles
-            if (title == null && line.matches(Regex(".*(經理|主管|工程師|專員|總監|總經理|董事|副總|總辦公|顧問).*"))) {
-                title = line
-                continue
-            }
-            // Phone – Taiwan mobile pattern
-            if (line.matches(Regex(".*(\\+?886|0)\\d{1,4}[ -]?\\d{3,4}[ -]?\\d{3,4}.*"))) {
-                phones.add(PhoneEntry(type = null, number = line))
+            // QR Code Data
+            if (line.startsWith("[QR Code Data:")) {
+                unclassified.add(line)
                 continue
             }
             // Email
@@ -73,27 +48,60 @@ class CardExtractor {
                 continue
             }
             // Website
-            if (website == null && (line.contains("www") || line.contains(".com"))) {
+            if (website == null && Regex("(www\\.|\\.com|\\.net|\\.tw|http)", RegexOption.IGNORE_CASE).containsMatchIn(line)) {
                 website = line
                 continue
             }
-            // Address
-            if (address == null && line.matches(Regex(".*(新竹|台北|台中|台南|高雄).*"))) {
+            // Phone
+            if (Regex("(\\+?886|0)[\\d\\- ()]{8,15}").containsMatchIn(line) ||
+                Regex("(Tel|Mobile|Fax|Phone|電話|手機|傳真)[\\s:]*([\\d\\- ()+]+)", RegexOption.IGNORE_CASE).containsMatchIn(line)) {
+                phones.add(PhoneEntry(type = null, number = line))
+                continue
+            }
+            // Address (市, 縣, 區, 路, 街, 段, 巷, 弄, 號, 樓, F, Rm)
+            if (address == null && Regex("(市|縣|區|路|街|段|巷|弄|號|樓|F\\b|Rm\\b)", RegexOption.IGNORE_CASE).containsMatchIn(line) && line.length >= 5 && !line.contains("@")) {
                 address = line
                 continue
             }
             // WeChat
-            if (wechat == null && (line.contains("WeChat") || line.contains("微信"))) {
+            if (wechat == null && Regex("(WeChat|微信)[\\s:]*(.*)", RegexOption.IGNORE_CASE).containsMatchIn(line)) {
                 wechat = line
                 continue
             }
-            // Other lines → note
-            if (lineInfo == null) {
+            // Line ID
+            if (lineInfo == null && Regex("(Line)[\\s:]*(.*)", RegexOption.IGNORE_CASE).containsMatchIn(line) && !line.contains("---")) {
                 lineInfo = line
-            } else {
-                note = (note ?: "") + "\n" + line
+                continue
+            }
+            // Title
+            if (title == null && Regex("(經理|主管|工程師|專員|總監|總經理|董事|副總|顧問|協理|代表|主任|策劃|負責人|長|管理師|理財|Sales|Manager|Director|Engineer|CEO|CTO|Officer)", RegexOption.IGNORE_CASE).containsMatchIn(line)) {
+                title = line
+                continue
+            }
+            // Company
+            if (company == null && Regex("(股份|有限|公司|集團|工作室|企業|實業|商行|大學|科技|工業|MEDIITEK|MEDITEK|MEDI|Inc\\.|Corp\\.|Co\\.,|LLC)", RegexOption.IGNORE_CASE).containsMatchIn(line)) {
+                company = line
+                continue
+            }
+            // Name (Usually short text without numbers)
+            if (name == null && line.length in 2..15 && !Regex("\\d").containsMatchIn(line) && !Regex("(公司|地址|電話|手機|傳真)").containsMatchIn(line)) {
+                name = line
+                continue
+            }
+            
+            unclassified.add(line)
+        }
+
+        // Apply heuristic: Unclassified text at the top is likely the company name
+        if (company == null) {
+            val potentialCompany = unclassified.firstOrNull { !it.startsWith("[QR") }
+            if (potentialCompany != null) {
+                company = potentialCompany
+                unclassified.remove(potentialCompany)
             }
         }
+
+        val note = if (unclassified.isNotEmpty()) unclassified.joinToString("\n") else null
 
         return BusinessCard(
             name = name,

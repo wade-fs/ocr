@@ -35,4 +35,8 @@ interface CardDao {
     /** Move a card to another category */
     @Query("UPDATE business_cards SET category = :newCategory WHERE id = :cardId")
     suspend fun moveCard(cardId: Long, newCategory: String)
+    
+    /** Find cards with an exact name */
+    @Query("SELECT * FROM business_cards WHERE name = :name LIMIT 1")
+    suspend fun getByName(name: String): CardEntity?
 }
