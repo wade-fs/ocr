@@ -33,23 +33,34 @@ android {
         buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
     }
 
-    signingConfigs {
-        create("release") {
-            val localProperties = Properties()
-            val localPropertiesFile = rootProject.file("local.properties")
-            if (localPropertiesFile.exists()) {
-                localProperties.load(localPropertiesFile.inputStream())
-            }
+	signingConfigs {
+		create("release") {
+			val localProperties = Properties()
+			val localPropertiesFile = rootProject.file("local.properties")
+			if (localPropertiesFile.exists()) {
+				localProperties.load(localPropertiesFile.inputStream())
+			}
 
-            keyAlias = System.getenv("KEY_ALIAS") ?: localProperties.getProperty("keystore.key.alias")
-            keyPassword = System.getenv("KEY_PASSWORD") ?: localProperties.getProperty("keystore.key.password")
-            
-            val keyFile = System.getenv("KEY_FILE") ?: localProperties.getProperty("keystore.path")
-            storeFile = if (keyFile != null) file(keyFile) else file("/home/wade/.ssh/androidapk.jks")
-            
-            storePassword = System.getenv("STORE_PASSWORD") ?: localProperties.getProperty("keystore.password")
-        }
-    }
+			keyAlias = System.getenv("KEY_ALIAS") ?: localProperties.getProperty("keystore.key.alias")
+			keyPassword = System.getenv("KEY_PASSWORD") ?: localProperties.getProperty("keystore.key.password")
+
+			val envKeyFile = System.getenv("KEY_FILE")
+			val localKeyFile = localProperties.getProperty("keystore.path")
+
+			if (envKeyFile != null) {
+				storeFile = file(envKeyFile)
+			} else if (localKeyFile != null) {
+				storeFile = file(localKeyFile)
+			} else {
+				val defaultPath = "/home/wade/.ssh/androidapk.jks"
+				if (file(defaultPath).exists()) {
+					storeFile = file(defaultPath)
+				}
+			}
+
+			storePassword = System.getenv("STORE_PASSWORD") ?: localProperties.getProperty("keystore.password")
+		}
+	}
 
     buildTypes {
         release {
