@@ -100,6 +100,14 @@ class EditCardFragment : Fragment() {
             }
         }
 
+        binding.layoutAddress.setEndIconOnClickListener {
+            val address = binding.editAddress.text.toString().trim()
+            if (address.isNotEmpty()) {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0?q=$address"))
+                startActivity(intent)
+            }
+        }
+
         binding.layoutWebsite.setEndIconOnClickListener {
             var url = binding.editWebsite.text.toString().trim()
             if (url.isNotEmpty()) {

@@ -124,10 +124,13 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layoutAddress"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="地址 Address"
-            android:layout_marginTop="8dp">
+            android:layout_marginTop="8dp"
+            app:endIconMode="custom"
+            app:endIconDrawable="@android:drawable/ic_dialog_map">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editAddress"
                 android:layout_width="match_parent"

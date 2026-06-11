@@ -32,6 +32,7 @@
    - 在電話、電子郵件、網址欄位增加互動圖示。
    - 點擊電話圖示可直接撥號（Intent.ACTION_DIAL）。
    - 點擊郵件圖示可開啟寫信畫面（Intent.ACTION_SENDTO）。
+   - 點擊地址圖示可開啟地圖 App 並定位該地址（geo:0,0?q=）。
    - 點擊網址圖示可直接開啟瀏覽器（Intent.ACTION_VIEW）。
    - 點擊 Line 圖示可嘗試直接跳轉至該 ID 的好友加好友/對話畫面（line://ti/p/~）。
    - 點擊 WeChat 圖示可自動開啟 WeChat App。
