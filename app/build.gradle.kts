@@ -24,37 +24,19 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
-
-        val localProperties = Properties()
-        val localPropertiesFile = rootProject.file("local.properties")
-        if (localPropertiesFile.exists()) {
-            localProperties.load(localPropertiesFile.inputStream())
-        }
-        val geminiApiKey = localProperties.getProperty("GEMINI_API_KEY") ?: ""
-        buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
     }
 
-	signingConfigs {
-		create("release") {
-			val localProperties = Properties()
-			val localPropertiesFile = rootProject.file("local.properties")
-			if (localPropertiesFile.exists()) {
-				localProperties.load(localPropertiesFile.inputStream())
-			}
-
-			keyAlias = System.getenv("KEY_ALIAS") ?: localProperties.getProperty("keystore.key.alias")
-			keyPassword = System.getenv("KEY_PASSWORD") ?: localProperties.getProperty("keystore.key.password")
-
-			val envKeyFile = System.getenv("KEY_FILE")
-			val localKeyFile = localProperties.getProperty("keystore.path")
-
-			// Resolve storeFile from environment, local properties, or fallback path
-        val resolvedStoreFile = envKeyFile ?: localKeyFile ?: "/home/wade/.ssh/androidapk.jks"
-        storeFile = file(resolvedStoreFile)
-
-			storePassword = System.getenv("STORE_PASSWORD") ?: localProperties.getProperty("keystore.password")
-		}
-	}
+    signingConfigs {
+        create("release") {
+            val keyFile = System.getenv("KEY_FILE")
+            if (keyFile != null) {
+                storeFile = file(keyFile)
+                keyAlias = System.getenv("KEY_ALIAS") ?: ""
+                keyPassword = System.getenv("KEY_PASSWORD") ?: ""
+                storePassword = System.getenv("STORE_PASSWORD") ?: ""
+            }
+        }
+    }
 
     buildTypes {
         release {
@@ -63,7 +45,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = if (System.getenv("KEY_FILE") != null) signingConfigs.getByName("release") else signingConfigs.getByName("debug")
         }
     }
     compileOptions {
