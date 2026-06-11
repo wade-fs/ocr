@@ -1,5 +1,8 @@
 package com.wade.ocr.ui.history
 
+import android.content.Intent
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -282,7 +285,22 @@ class EditCardFragment : Fragment() {
         val customFields: Map<String, String>? = card.customFieldsJson?.let { gson.fromJson(it, customFieldsType) }
         customFields?.forEach { (k, v) -> addCustomFieldRow(k, v) }
         
+        card.imagePath?.let { loadCardImage(it) }
+        
         binding.textRawOcr.text = "原始 OCR:\n${card.rawText ?: "無"}"
+    }
+
+    private fun loadCardImage(path: String) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val bitmap = BitmapFactory.decodeFile(path)
+                withContext(Dispatchers.Main) {
+                    binding.imageCard.setImageBitmap(bitmap)
+                }
+            } catch (e: Exception) {
+                // Ignore loading error
+            }
+        }
     }
 
     private fun populateFromBusinessCard(card: BusinessCard) {
@@ -301,6 +319,8 @@ class EditCardFragment : Fragment() {
         // Custom Fields
         binding.containerCustomFields.removeAllViews()
         card.customFields?.forEach { (k, v) -> addCustomFieldRow(k, v) }
+        
+        card.imagePath?.let { loadCardImage(it) }
         
         binding.textRawOcr.text = "原始 OCR:\n${card.note ?: "無"}"
     }
@@ -443,25 +463,6 @@ class EditCardFragment : Fragment() {
                             withContext(Dispatchers.Main) {
                                 Toast.makeText(requireContext(), "已新增 $newCategory", Toast.LENGTH_SHORT).show()
                                 setupCategories()
-                            }
-                        } else {
-                            withContext(Dispatchers.Main) {
-                                Toast.makeText(requireContext(), "分類已存在", Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                    }
-                }
-            }
-            .setNegativeButton("取消", null)
-            .show()
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-    }
-}
-pCategories()
                             }
                         } else {
                             withContext(Dispatchers.Main) {
