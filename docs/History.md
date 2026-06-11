@@ -35,5 +35,9 @@
    - 點擊網址圖示可直接開啟瀏覽器（Intent.ACTION_VIEW）。
    - 點擊 Line 圖示可嘗試直接跳轉至該 ID 的好友加好友/對話畫面（line://ti/p/~）。
    - 點擊 WeChat 圖示可自動開啟 WeChat App。
+6. **圖檔關聯與儲存** – 
+   - `CardEntity` 新增 `image_path` 欄位，儲存原始名片照片路徑。
+   - 編輯頁面頂端增加名片圖檔顯示區，方便對照原始資訊進行編輯。
+   - 使用路徑與資料庫 ID 綁定，避免同名名片造成圖檔衝突。
 
 以上變更已同步至 `EditCardFragment.kt`、`CardEntity.kt`、`fragment_edit_card.xml` 等相關檔案。

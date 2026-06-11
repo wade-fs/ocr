@@ -15,5 +15,6 @@ data class BusinessCard(
     val wechat: String?,
     val line: String?,
     val note: String?,
-    val customFields: Map<String, String>? = null
+    val customFields: Map<String, String>? = null,
+    val imagePath: String? = null
 ) : Parcelable

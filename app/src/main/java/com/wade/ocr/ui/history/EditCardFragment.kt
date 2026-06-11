@@ -341,7 +341,8 @@ class EditCardFragment : Fragment() {
             wechat = binding.editWechat.text.toString().takeIf { it.isNotBlank() },
             line = binding.editLine.text.toString().takeIf { it.isNotBlank() },
             bboxJson = currentDbCard?.bboxJson,
-            customFieldsJson = if (customFields.isNotEmpty()) gson.toJson(customFields) else null
+            customFieldsJson = if (customFields.isNotEmpty()) gson.toJson(customFields) else null,
+            imagePath = scannedCard?.imagePath ?: currentDbCard?.imagePath
         )
 
         lifecycleScope.launch(Dispatchers.IO) {
@@ -442,6 +443,25 @@ class EditCardFragment : Fragment() {
                             withContext(Dispatchers.Main) {
                                 Toast.makeText(requireContext(), "已新增 $newCategory", Toast.LENGTH_SHORT).show()
                                 setupCategories()
+                            }
+                        } else {
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(requireContext(), "分類已存在", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+}
+pCategories()
                             }
                         } else {
                             withContext(Dispatchers.Main) {

@@ -10,6 +10,22 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardImageContainer"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp">
+            <ImageView
+                android:id="@+id/imageCard"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@android:drawable/ic_menu_gallery"
+                android:contentDescription="名片圖檔" />
+        </com.google.android.material.card.MaterialCardView>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
