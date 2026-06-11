@@ -73,6 +73,65 @@ class EditCardFragment : Fragment() {
         binding.buttonAddCategory.setOnClickListener { showAddCategoryDialog() }
         binding.buttonManageCategory.setOnClickListener { showManageCategoryDialog() }
         binding.buttonAddCustomField.setOnClickListener { addCustomFieldRow("", "") }
+
+        setupInteractiveIcons()
+    }
+
+    private fun setupInteractiveIcons() {
+        binding.layoutPhones.setEndIconOnClickListener {
+            val phone = binding.editPhones.text.toString().split(",").firstOrNull { it.isNotBlank() }?.trim()
+            if (!phone.isNullOrEmpty()) {
+                val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phone"))
+                startActivity(intent)
+            }
+        }
+
+        binding.layoutEmails.setEndIconOnClickListener {
+            val email = binding.editEmails.text.toString().split(",").firstOrNull { it.isNotBlank() }?.trim()
+            if (!email.isNullOrEmpty()) {
+                val intent = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:$email"))
+                startActivity(intent)
+            }
+        }
+
+        binding.layoutWebsite.setEndIconOnClickListener {
+            var url = binding.editWebsite.text.toString().trim()
+            if (url.isNotEmpty()) {
+                if (!url.startsWith("http://") && !url.startsWith("https://")) {
+                    url = "https://$url"
+                }
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                startActivity(intent)
+            }
+        }
+
+        binding.layoutWechat.setEndIconOnClickListener {
+            val wechatId = binding.editWechat.text.toString().trim()
+            if (wechatId.isNotEmpty()) {
+                // WeChat doesn't support a direct user search URI easily anymore.
+                // Best effort is opening the app or using weixin://
+                try {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("weixin://"))
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "未安裝 WeChat", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        binding.layoutLine.setEndIconOnClickListener {
+            val lineId = binding.editLine.text.toString().trim()
+            if (lineId.isNotEmpty()) {
+                try {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("line://ti/p/~$lineId"))
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    // Fallback to browser
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://line.me/ti/p/~$lineId"))
+                    startActivity(intent)
+                }
+            }
+        }
     }
 
     private fun addCustomFieldRow(key: String, value: String) {

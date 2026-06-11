@@ -80,10 +80,13 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layoutPhones"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="電話 Phones (JSON/Text)"
-            android:layout_marginTop="8dp">
+            android:layout_marginTop="8dp"
+            app:endIconMode="custom"
+            app:endIconDrawable="@android:drawable/ic_menu_call">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editPhones"
                 android:layout_width="match_parent"
@@ -91,10 +94,13 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layoutEmails"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="電子郵件 Emails (JSON/Text)"
-            android:layout_marginTop="8dp">
+            android:layout_marginTop="8dp"
+            app:endIconMode="custom"
+            app:endIconDrawable="@android:drawable/ic_dialog_email">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editEmails"
                 android:layout_width="match_parent"
@@ -113,10 +119,13 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layoutWebsite"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="網址 Website"
-            android:layout_marginTop="8dp">
+            android:layout_marginTop="8dp"
+            app:endIconMode="custom"
+            app:endIconDrawable="@android:drawable/ic_menu_search">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editWebsite"
                 android:layout_width="match_parent"
@@ -124,10 +133,13 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layoutWechat"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="WeChat"
-            android:layout_marginTop="8dp">
+            android:layout_marginTop="8dp"
+            app:endIconMode="custom"
+            app:endIconDrawable="@android:drawable/ic_menu_send">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editWechat"
                 android:layout_width="match_parent"
@@ -135,10 +147,13 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layoutLine"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Line ID"
-            android:layout_marginTop="8dp">
+            android:layout_marginTop="8dp"
+            app:endIconMode="custom"
+            app:endIconDrawable="@android:drawable/ic_menu_send">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editLine"
                 android:layout_width="match_parent"
