@@ -20,6 +20,7 @@ import com.wade.ocr.data.local.CategoryEntity
 import com.wade.ocr.data.model.BusinessCard
 import com.wade.ocr.data.model.PhoneEntry
 import com.wade.ocr.databinding.FragmentEditCardBinding
+import com.wade.ocr.databinding.ItemCustomFieldBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -71,6 +72,17 @@ class EditCardFragment : Fragment() {
         binding.buttonDelete.setOnClickListener { deleteCard() }
         binding.buttonAddCategory.setOnClickListener { showAddCategoryDialog() }
         binding.buttonManageCategory.setOnClickListener { showManageCategoryDialog() }
+        binding.buttonAddCustomField.setOnClickListener { addCustomFieldRow("", "") }
+    }
+
+    private fun addCustomFieldRow(key: String, value: String) {
+        val fieldBinding = ItemCustomFieldBinding.inflate(layoutInflater, binding.containerCustomFields, false)
+        fieldBinding.editKey.setText(key)
+        fieldBinding.editValue.setText(value)
+        fieldBinding.buttonRemove.setOnClickListener {
+            binding.containerCustomFields.removeView(fieldBinding.root)
+        }
+        binding.containerCustomFields.addView(fieldBinding.root)
     }
 
     private fun showManageCategoryDialog() {
@@ -193,7 +205,9 @@ class EditCardFragment : Fragment() {
         binding.editCompany.setText(card.company)
         binding.editAddress.setText(card.address)
         binding.editWebsite.setText(card.website)
-        binding.editNote.setText(card.rawText) // Show raw text or note
+        binding.editWechat.setText(card.wechat)
+        binding.editLine.setText(card.line)
+        binding.editNote.setText(card.rawText)
         
         val phonesType = object : TypeToken<List<PhoneEntry>>() {}.type
         val phonesList: List<PhoneEntry>? = card.phonesJson?.let { gson.fromJson(it, phonesType) }
@@ -202,6 +216,12 @@ class EditCardFragment : Fragment() {
         val emailsType = object : TypeToken<List<String>>() {}.type
         val emailsList: List<String>? = card.emailsJson?.let { gson.fromJson(it, emailsType) }
         binding.editEmails.setText(emailsList?.joinToString(", "))
+
+        // Custom Fields
+        binding.containerCustomFields.removeAllViews()
+        val customFieldsType = object : TypeToken<Map<String, String>>() {}.type
+        val customFields: Map<String, String>? = card.customFieldsJson?.let { gson.fromJson(it, customFieldsType) }
+        customFields?.forEach { (k, v) -> addCustomFieldRow(k, v) }
         
         binding.textRawOcr.text = "原始 OCR:\n${card.rawText ?: "無"}"
     }
@@ -212,10 +232,16 @@ class EditCardFragment : Fragment() {
         binding.editCompany.setText(card.company)
         binding.editAddress.setText(card.address)
         binding.editWebsite.setText(card.website)
+        binding.editWechat.setText(card.wechat)
+        binding.editLine.setText(card.line)
         binding.editNote.setText(card.note)
         
         binding.editPhones.setText(card.phones?.joinToString(", ") { it.number ?: "" })
         binding.editEmails.setText(card.emails?.joinToString(", "))
+
+        // Custom Fields
+        binding.containerCustomFields.removeAllViews()
+        card.customFields?.forEach { (k, v) -> addCustomFieldRow(k, v) }
         
         binding.textRawOcr.text = "原始 OCR:\n${card.note ?: "無"}"
     }
@@ -230,6 +256,18 @@ class EditCardFragment : Fragment() {
         
         val emailStrings = binding.editEmails.text.toString().split(",").map { it.trim() }.filter { it.isNotEmpty() }
 
+        // Gather Custom Fields
+        val customFields = mutableMapOf<String, String>()
+        for (i in 0 until binding.containerCustomFields.childCount) {
+            val child = binding.containerCustomFields.getChildAt(i)
+            val fieldBinding = ItemCustomFieldBinding.bind(child)
+            val key = fieldBinding.editKey.text.toString().trim()
+            val value = fieldBinding.editValue.text.toString().trim()
+            if (key.isNotEmpty()) {
+                customFields[key] = value
+            }
+        }
+
         val cardEntity = CardEntity(
             id = if (cardId != -1L) cardId else 0L,
             name = nameInput,
@@ -241,8 +279,10 @@ class EditCardFragment : Fragment() {
             phonesJson = if (phoneEntries.isNotEmpty()) gson.toJson(phoneEntries) else null,
             emailsJson = if (emailStrings.isNotEmpty()) gson.toJson(emailStrings) else null,
             rawText = binding.editNote.text.toString().takeIf { it.isNotBlank() } ?: currentDbCard?.rawText,
-            wechat = currentDbCard?.wechat ?: scannedCard?.wechat,
-            bboxJson = currentDbCard?.bboxJson
+            wechat = binding.editWechat.text.toString().takeIf { it.isNotBlank() },
+            line = binding.editLine.text.toString().takeIf { it.isNotBlank() },
+            bboxJson = currentDbCard?.bboxJson,
+            customFieldsJson = if (customFields.isNotEmpty()) gson.toJson(customFields) else null
         )
 
         lifecycleScope.launch(Dispatchers.IO) {
@@ -267,7 +307,7 @@ class EditCardFragment : Fragment() {
             
             withContext(Dispatchers.Main) {
                 Toast.makeText(requireContext(), "已儲存", Toast.LENGTH_SHORT).show()
-                findNavController().navigate(R.id.action_editCardFragment_to_historyFragment) // Replace navigateUp to avoid looping to camera
+                findNavController().navigate(R.id.action_editCardFragment_to_historyFragment)
             }
         }
     }

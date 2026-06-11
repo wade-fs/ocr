@@ -23,4 +23,12 @@ object Converters {
     @TypeConverter
     fun toPhoneList(value: String?): List<com.wade.ocr.data.model.PhoneEntry>? =
         value?.let { gson.fromJson(it, object : TypeToken<List<com.wade.ocr.data.model.PhoneEntry>>() {}.type) }
+
+    @TypeConverter
+    fun fromStringMap(value: Map<String, String>?): String? =
+        value?.let { gson.toJson(it) }
+
+    @TypeConverter
+    fun toStringMap(value: String?): Map<String, String>? =
+        value?.let { gson.fromJson(it, object : TypeToken<Map<String, String>>() {}.type) }
 }
