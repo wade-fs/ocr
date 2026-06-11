@@ -4,6 +4,7 @@ import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -75,6 +76,7 @@ class EditCardFragment : Fragment() {
 
         binding.buttonSave.setOnClickListener { saveCard() }
         binding.buttonReRecognize.setOnClickListener { reRecognize() }
+        binding.buttonShare.setOnClickListener { showQrCodeDialog() }
         binding.buttonDelete.setOnClickListener { deleteCard() }
         binding.buttonAddCategory.setOnClickListener { showAddCategoryDialog() }
         binding.buttonManageCategory.setOnClickListener { showManageCategoryDialog() }
@@ -457,6 +459,7 @@ class EditCardFragment : Fragment() {
     }
 
     private fun showQrCodeDialog() {
+        Log.d("EditCardFragment", "showQrCodeDialog called")
         val name = binding.editName.text.toString().trim()
         val title = binding.editTitle.text.toString().trim()
         val company = binding.editCompany.text.toString().trim()
@@ -479,12 +482,14 @@ class EditCardFragment : Fragment() {
             if (wechat.isNotEmpty()) appendLine("WC:$wechat")
             if (line.isNotEmpty()) appendLine("L:$line")
         }.toString()
+        Log.d("EditCardFragment", "QR Content: $qrContent")
 
         try {
             val writer = MultiFormatWriter()
             val matrix = writer.encode(qrContent, BarcodeFormat.QR_CODE, 600, 600)
             val encoder = BarcodeEncoder()
             val bitmap = encoder.createBitmap(matrix)
+            Log.d("EditCardFragment", "QR Bitmap generated successfully")
 
             val imageView = android.widget.ImageView(requireContext()).apply {
                 setImageBitmap(bitmap)
@@ -496,8 +501,10 @@ class EditCardFragment : Fragment() {
                 .setView(imageView)
                 .setPositiveButton("關閉", null)
                 .show()
+            Log.d("EditCardFragment", "AlertDialog shown")
         } catch (e: Exception) {
-            Toast.makeText(requireContext(), "無法產生 QR Code", Toast.LENGTH_SHORT).show()
+            Log.e("EditCardFragment", "Error generating QR Code", e)
+            Toast.makeText(requireContext(), "無法產生 QR Code: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 
