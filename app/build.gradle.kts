@@ -1,4 +1,5 @@
 import java.util.Properties
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
 
@@ -47,16 +48,9 @@ android {
 			val envKeyFile = System.getenv("KEY_FILE")
 			val localKeyFile = localProperties.getProperty("keystore.path")
 
-			if (envKeyFile != null) {
-				storeFile = file(envKeyFile)
-			} else if (localKeyFile != null) {
-				storeFile = file(localKeyFile)
-			} else {
-				val defaultPath = "/home/wade/.ssh/androidapk.jks"
-				if (file(defaultPath).exists()) {
-					storeFile = file(defaultPath)
-				}
-			}
+			// Resolve storeFile from environment, local properties, or fallback path
+        val resolvedStoreFile = envKeyFile ?: localKeyFile ?: "/home/wade/.ssh/androidapk.jks"
+        storeFile = file(resolvedStoreFile)
 
 			storePassword = System.getenv("STORE_PASSWORD") ?: localProperties.getProperty("keystore.password")
 		}
@@ -77,9 +71,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    kotlinOptions {
-        jvmTarget = "11"
-    }
+    // kotlinOptions migrated to compilerOptions
 
     lint {
         abortOnError = false
@@ -89,6 +81,13 @@ android {
     buildFeatures {
         viewBinding = true
         buildConfig = true
+    }
+}
+
+kotlin {
+    compilerOptions {
+        // Use typed JvmTarget enum for better type safety
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
     }
 }
 
