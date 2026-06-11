@@ -39,5 +39,9 @@
    - `CardEntity` 新增 `image_path` 欄位，儲存原始名片照片路徑。
    - 編輯頁面頂端增加名片圖檔顯示區，方便對照原始資訊進行編輯。
    - 使用路徑與資料庫 ID 綁定，避免同名名片造成圖檔衝突。
+7. **QR Code 名片交換** – 
+   - 導入 ZXing 函式庫，支援產生名片專屬 QR Code。
+   - 編輯頁面新增「分享名片」按鈕，可顯示內含名片資訊的 QR Code 供他人掃瞄。
+   - 優化 `CardOcrProcessor` 與 `CardExtractor`，掃瞄時可同步偵測 QR Code，若為本 App 格式則可秒速匯入完整資訊。
 
-以上變更已同步至 `EditCardFragment.kt`、`CardEntity.kt`、`fragment_edit_card.xml` 等相關檔案。
+以上變更已同步至 `EditCardFragment.kt`、`CardExtractor.kt`、`app/build.gradle.kts` 等相關檔案。

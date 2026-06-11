@@ -22,6 +22,9 @@ import com.wade.ocr.data.local.AppDatabase
 import com.wade.ocr.data.local.CategoryEntity
 import com.wade.ocr.data.model.BusinessCard
 import com.wade.ocr.data.model.PhoneEntry
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.MultiFormatWriter
+import com.journeyapps.barcodescanner.BarcodeEncoder
 import com.wade.ocr.databinding.FragmentEditCardBinding
 import com.wade.ocr.databinding.ItemCustomFieldBinding
 import kotlinx.coroutines.Dispatchers
@@ -443,6 +446,51 @@ class EditCardFragment : Fragment() {
     private fun reRecognize() {
         val bundle = Bundle().apply { putLong("cardId", cardId) }
         findNavController().navigate(R.id.action_editCardFragment_to_cameraFragment, bundle)
+    }
+
+    private fun showQrCodeDialog() {
+        val name = binding.editName.text.toString().trim()
+        val title = binding.editTitle.text.toString().trim()
+        val company = binding.editCompany.text.toString().trim()
+        val phone = binding.editPhones.text.toString().trim()
+        val email = binding.editEmails.text.toString().trim()
+        val website = binding.editWebsite.text.toString().trim()
+        val wechat = binding.editWechat.text.toString().trim()
+        val line = binding.editLine.text.toString().trim()
+
+        // Create a simple text format for QR exchange. 
+        // Using a custom prefix to identify it's an OCR app card
+        val qrContent = StringBuilder().apply {
+            appendLine("OCR_CARD_V1")
+            if (name.isNotEmpty()) appendLine("N:$name")
+            if (title.isNotEmpty()) appendLine("T:$title")
+            if (company.isNotEmpty()) appendLine("C:$company")
+            if (phone.isNotEmpty()) appendLine("P:$phone")
+            if (email.isNotEmpty()) appendLine("E:$email")
+            if (website.isNotEmpty()) appendLine("W:$website")
+            if (wechat.isNotEmpty()) appendLine("WC:$wechat")
+            if (line.isNotEmpty()) appendLine("L:$line")
+        }.toString()
+
+        try {
+            val writer = MultiFormatWriter()
+            val matrix = writer.encode(qrContent, BarcodeFormat.QR_CODE, 600, 600)
+            val encoder = BarcodeEncoder()
+            val bitmap = encoder.createBitmap(matrix)
+
+            val imageView = android.widget.ImageView(requireContext()).apply {
+                setImageBitmap(bitmap)
+                setPadding(40, 40, 40, 40)
+            }
+
+            AlertDialog.Builder(requireContext())
+                .setTitle("掃瞄此 QR Code 以交換名片")
+                .setView(imageView)
+                .setPositiveButton("關閉", null)
+                .show()
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "無法產生 QR Code", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun showAddCategoryDialog() {

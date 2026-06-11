@@ -20,7 +20,50 @@ class CardExtractor {
         }
     }
 
+    private fun parseExchangeQr(text: String): BusinessCard {
+        var name: String? = null
+        var title: String? = null
+        var company: String? = null
+        val phones = mutableListOf<PhoneEntry>()
+        val emails = mutableListOf<String>()
+        var address: String? = null
+        var website: String? = null
+        var wechat: String? = null
+        var lineInfo: String? = null
+
+        text.lines().forEach { line ->
+            when {
+                line.startsWith("N:") -> name = line.substring(2)
+                line.startsWith("T:") -> title = line.substring(2)
+                line.startsWith("C:") -> company = line.substring(2)
+                line.startsWith("P:") -> phones.add(PhoneEntry(null, line.substring(2)))
+                line.startsWith("E:") -> emails.add(line.substring(2))
+                line.startsWith("W:") -> website = line.substring(2)
+                line.startsWith("WC:") -> wechat = line.substring(3)
+                line.startsWith("L:") -> lineInfo = line.substring(2)
+            }
+        }
+
+        return BusinessCard(
+            name = name,
+            title = title,
+            company = company,
+            phones = phones.ifEmpty { null },
+            emails = emails.ifEmpty { null },
+            address = address,
+            website = website,
+            wechat = wechat,
+            line = lineInfo,
+            note = "透過 QR Code 交換取得"
+        )
+    }
+
     private fun parseOcr(text: String): BusinessCard? {
+        // Check for custom QR exchange format
+        if (text.contains("OCR_CARD_V1")) {
+            return parseExchangeQr(text)
+        }
+
         // Filter out "---" which is used as block separator
         val lines = text.lines().map { it.trim() }.filter { it.isNotEmpty() && it != "---" }
         if (lines.isEmpty()) return null

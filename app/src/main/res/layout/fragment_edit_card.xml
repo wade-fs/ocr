@@ -240,6 +240,15 @@
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
 
             <Button
+                android:id="@+id/buttonShare"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginHorizontal="4dp"
+                android:text="分享名片"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+
+            <Button
                 android:id="@+id/buttonSave"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
